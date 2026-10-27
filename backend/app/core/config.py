@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     # ── Logging ───────────────────────────────────────────────────────────────
     log_level: str = "INFO"
 
+    # ── Environment feature (Doctor-Patient) ──────────────────────────────────
+    db_path: str = "data/swasthyascan.db"
+    uploads_dir: str = "data/uploads"
+    environment_expiry_hours: float = 24.0
+    # Set MODEL_VERIFIED=true ONLY after external clinical validation
+    model_verified: bool = False
+
     # ── Groq chatbot ──────────────────────────────────────────────────────────
     # Server-side only. Never expose this in the frontend or logs.
     groq_api_key: str = ""

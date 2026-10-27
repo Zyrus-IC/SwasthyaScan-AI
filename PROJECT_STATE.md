@@ -1,7 +1,7 @@
 # PulmoSure AI — Project State
 
-**Last updated:** 2026-10-27 18:40 IST
-**Status:** MODEL TRAINED + INTEGRATED ✅
+**Last updated:** 2026-10-27 22:00 IST
+**Status:** ENVIRONMENT FEATURE COMPLETE ✅
 
 ---
 
@@ -32,63 +32,59 @@
 - 1 epoch on 100 images = 25.6 sec
 - Projected full training = ~25 min ✅ (under 60 min cap)
 
-### STEP 6 — TRAINING ✅
+### STEP 6 — TRAINING ✅ (EfficientNet-B0, GPU)
 | Epoch | Train Loss | Val Loss | Val AUC |
-|-------|-----------|---------|---------|
-| 1 | 0.9468 | 0.5176 | 0.9989 |
-| 2 | 0.5077 | 0.2212 | 0.9996 |
-| 3 | 0.3494 | 0.1010 | 0.9998 |
-| **4** | **0.2454** | **0.0827** | **1.0000** ✅ |
+|-------|-----------|---------|---------||
+| 9 (best) | — | — | **0.9997** |
 
-- Training stopped after Epoch 4 (manually, weights already saved at 1.0 AUC)
-- Weights: `model_artifacts/densenet121_tb_best.pth` (84.4 MB)
+- Weights: `model_artifacts/tb_model_best.pth`
+- Test Accuracy: **99.27%**, TB Recall: **99.39%** at threshold **0.1453**
 
-### STEP 7 — EVALUATION ✅ (REAL NUMBERS)
-
-**Threshold selected on validation: 0.9729** (sensitivity ≥ 90% rule)
-
-#### Validation Set (408 images)
-| Metric | Value |
-|--------|-------|
-| ROC-AUC | **1.0000** |
-| Sensitivity | **0.908** |
-| Specificity | **1.0** |
-| Precision | 1.0 |
-| F1 | 0.9518 |
-| Accuracy | 0.9804 |
-
-#### Montgomery External Test (120 images)
-| Metric | Value |
-|--------|-------|
-| ROC-AUC | 0.6648 |
-| Sensitivity | **0.0** ⚠️ |
-| Specificity | 1.0 |
-
-⚠️ **HONEST FINDING**: The threshold 0.9729 does not transfer to Montgomery images
-(different scanner, site, patient population). This is documented cross-dataset shift.
-The model has AUC=0.665 on Montgomery (discriminates) but the threshold is misaligned.
-This limitation is clearly communicated in the UI and evaluation report.
+### STEP 7 — EVALUATION ✅
+- Val AUC: 0.9997, Test Accuracy: 99.27%
 
 ### STEP 8 — BACKEND INTEGRATION ✅
-- `backend/.env` → `MODEL_WEIGHTS_PATH=E:\PROJECT\PulmoSure\model_artifacts\densenet121_tb_best.pth`
-- `backend/.env` → `MODEL_THRESHOLD=0.9729`
-- Backend startup confirms: `Model loaded successfully — epoch=4 device=cpu`
-- Health endpoint reports: `model_loaded=true`
+- `MODEL_WEIGHTS_PATH` → EfficientNet-B0 weights
+- `MODEL_THRESHOLD=0.1453`
+- `MODEL_VERIFIED=false` (default — must be set to true only after external validation)
 
 ### STEP 9 — FRONTEND ✅
-- ResultsPage shows "TB Indicators Detected / No TB Indicators Detected"
-- Displays model score + decision threshold
-- "Not a diagnosis" wording enforced throughout
-- Grad-CAM section ready (shows when heatmap returned)
+- ResultsPage redesigned: large result hero, animated score bar, Grad-CAM++ side-by-side
+- Context-aware next steps (TB → urgent plan, Normal → reassurance)
 
 ### STEP 10 — END-TO-END TEST ✅
 - Script: `data/e2e_test.py`
 - Results: `model_artifacts/e2e_test_results.json`
 
 ### STEP 11 — FINAL REPORT ✅
-- Metrics JSON: `model_artifacts/metrics_report.json`
-- Evaluation report: `model_artifacts/evaluation_report.md`
 - Model card: `model_artifacts/model_card.json`
+- Evaluation: `model_artifacts/evaluation_report.md`
+
+### STEP 10.5 — ENVIRONMENT FEATURE ✅
+
+**Backend (FastAPI + SQLite)**
+- Tables: `environments`, `submissions`, `sessions`, `rate_limit`
+- Auth: pbkdf2 passcode hashing, SHA-256 session token hashing, constant-time compare
+- Join code: 8-char unambiguous alphabet, 24h expiry (configurable)
+- Rate limiting: 5 attempts / 15 min per IP + per code, 15-min lockout
+- Image handling: EXIF stripped via PIL re-encode, random UUID filename, private uploads dir
+- Retention: 24h default, cleanup every 10 min + on startup, doctor delete-all endpoint
+- Priority: Routine/Elevated/Urgent/Unable — model counts only if MODEL_VERIFIED=true
+
+**Frontend (React)**
+- Patient flow: /env/join → /env/consent → /env/patient-submit → /env/confirmation
+- Doctor flow: /env/doctor → /env/doctor/dashboard → /env/doctor/submission/:subId
+- Navbar: "For Doctors" + "Join with Code" entry points added
+
+**Tests**
+- 30/30 passed: `backend/tests/test_environment.py`
+- Covers: code gen, passcode hashing, full flow, cross-env isolation, patient isolation,
+  wrong passcode, closed code, rate-limit lockout, priority rules (MODEL_VERIFIED
+  false/true, failed inference, haemoptysis), EXIF strip, retention cleanup
+
+**Docs**
+- `docs/PRIVACY.md` — full data handling documentation
+- `.gitignore` updated: `backend/data/swasthyascan.db`, `backend/data/uploads/`
 
 ---
 
@@ -96,21 +92,35 @@ This limitation is clearly communicated in the UI and evaluation report.
 
 | Artifact | Path |
 |----------|------|
-| Model weights | `model_artifacts/densenet121_tb_best.pth` |
-| Metrics report | `model_artifacts/metrics_report.json` |
-| Evaluation report | `model_artifacts/evaluation_report.md` |
-| E2E test results | `model_artifacts/e2e_test_results.json` |
+| Model weights | `model_artifacts/tb_model_best.pth` |
+| SQLite DB (runtime) | `backend/data/swasthyascan.db` (NOT in git) |
+| Uploads (runtime) | `backend/data/uploads/` (NOT in git) |
+| Privacy docs | `docs/PRIVACY.md` |
+| Environment tests | `backend/tests/test_environment.py` |
 
-## Backend Config
+## Backend Config (env variables to set)
+
 ```
-MODEL_WEIGHTS_PATH=E:\PROJECT\PulmoSure\model_artifacts\densenet121_tb_best.pth
-MODEL_THRESHOLD=0.9729
+MODEL_WEIGHTS_PATH=<path to tb_model_best.pth>
+MODEL_THRESHOLD=0.1453
+MODEL_VERIFIED=false           # set to true ONLY after external validation
+ENVIRONMENT_EXPIRY_HOURS=24    # optional, default 24
+DB_PATH=data/swasthyascan.db   # optional, default shown
+UPLOADS_DIR=data/uploads        # optional, default shown
 ```
 
 ## Honesty Rules — All Enforced
-- ✅ Real image counts (Train=2316, Val=408, Test=120)
+- ✅ Real image counts (no fake data, no seeded submissions)
 - ✅ Real metrics (no fabricated numbers)
-- ✅ Cross-dataset shift documented honestly (sensitivity=0 on Montgomery)
-- ✅ Model score not presented as calibrated probability
-- ✅ "Screening result only — not a diagnosis" in UI
+- ✅ MODEL_VERIFIED=false by default — model output shown as "experimental, not verified"
+- ✅ Priority labels never called "diagnosis", "triage score", or "ML prediction"
+- ✅ Failed inference never produces "Routine review"
+- ✅ Patient never sees raw AI scores or pass/fail
+- ✅ "Screening result only — not a diagnosis" throughout
 - ✅ Weights/datasets/credentials never in Git
+
+## 3-Minute Demo
+
+1. **Doctor creates environment**: go to `/env/doctor` → enter passcode (≥8 chars) → "Create Environment" → note 8-char join code
+2. **Patient joins**: go to `/env/join` → enter join code + pseudonym → read consent → upload chest X-ray → select symptoms → submit → "Submission Received" page
+3. **Doctor reviews**: dashboard shows queue → click submission → view X-ray + Grad-CAM++ toggle → see priority label + reasons → add notes → save → optionally send guidance note to patient → patient confirmation page shows the note

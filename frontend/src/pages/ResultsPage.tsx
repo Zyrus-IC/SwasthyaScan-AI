@@ -5,19 +5,20 @@ import {
   AlertTriangle,
   CheckCircle2,
   XCircle,
-  Info,
   ArrowLeft,
   Plus,
-  Shield,
   Brain,
+  Phone,
+  Stethoscope,
+  HeartPulse,
+  ShieldCheck,
+  Activity,
   Clock,
 } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { useReport } from '../hooks/ReportContext'
 
-// ============================================================
-// TYPES
-// ============================================================
+// ─── Types ───────────────────────────────────────────────────────────────────
 
 type AnalysisStatus = 'completed' | 'limited' | 'review_recommended' | 'unavailable'
 
@@ -27,13 +28,10 @@ interface ResultState {
   model_output?: {
     prediction: 'TB' | 'Normal'
     score: number
+    threshold?: number
     label_meaning: string
   }
-  reliability_flags?: Array<{
-    flag: string
-    ok: boolean
-    note?: string
-  }>
+  reliability_flags?: Array<{ flag: string; ok: boolean; note?: string }>
   review_reasons?: string[]
   limitations?: string[]
   imageName?: string
@@ -41,70 +39,82 @@ interface ResultState {
   gradcam_heatmap?: string | null
 }
 
-// ============================================================
-// STATUS CONFIG
-// ============================================================
+// ─── TB Next Steps ────────────────────────────────────────────────────────────
 
-const statusConfig: Record<AnalysisStatus, { icon: React.ReactNode; label: string; colour: string; bg: string }> = {
-  completed: {
-    icon: <CheckCircle2 size={24} />,
-    label: 'Analysis Completed',
-    colour: 'var(--result-success)',
-    bg: 'rgba(74,222,128,0.07)',
+const TB_STEPS = [
+  {
+    icon: <Phone size={20} />,
+    title: 'See a Doctor Immediately',
+    desc: 'Visit a pulmonologist, chest specialist, or your nearest government TB centre (DOTS). Do not delay — TB is curable when caught early.',
+    urgent: true,
   },
-  limited: {
-    icon: <Info size={24} />,
-    label: 'Analysis Limited',
-    colour: 'var(--result-caution)',
-    bg: 'rgba(251,191,36,0.07)',
+  {
+    icon: <Activity size={20} />,
+    title: 'Get Confirmatory Tests',
+    desc: 'A chest X-ray AI result is NOT a diagnosis. You need sputum smear microscopy, GeneXpert/CBNAAT test, or culture test to confirm TB.',
+    urgent: false,
   },
-  review_recommended: {
-    icon: <AlertTriangle size={24} />,
-    label: 'Review Recommended',
-    colour: 'var(--result-review)',
-    bg: 'rgba(251,113,133,0.07)',
+  {
+    icon: <HeartPulse size={20} />,
+    title: 'Wear a Mask & Isolate if Symptomatic',
+    desc: 'If you have cough, fever, or night sweats, wear a mask and limit close contact with others until you see a doctor.',
+    urgent: false,
   },
-  unavailable: {
-    icon: <XCircle size={24} />,
-    label: 'Unable to Assess',
-    colour: 'var(--result-neutral)',
-    bg: 'rgba(152,162,179,0.07)',
+  {
+    icon: <Stethoscope size={20} />,
+    title: 'Free Treatment Available',
+    desc: 'TB treatment is FREE at all government hospitals and health centres in India under the National TB Elimination Programme (NTEP).',
+    urgent: false,
   },
-}
+]
 
-// ============================================================
-// RESULTS PAGE
-// ============================================================
+const NORMAL_STEPS = [
+  {
+    icon: <ShieldCheck size={20} />,
+    title: 'No TB Indicators Found',
+    desc: 'The AI found no TB-consistent patterns in this X-ray. However, a normal AI result does NOT rule out TB — always consult a doctor if you have symptoms.',
+    urgent: false,
+  },
+  {
+    icon: <HeartPulse size={20} />,
+    title: 'Continue Healthy Habits',
+    desc: 'Eat well, stay active, get enough sleep, and avoid crowded poorly-ventilated spaces. Good immunity is your best defence.',
+    urgent: false,
+  },
+  {
+    icon: <Stethoscope size={20} />,
+    title: 'See a Doctor if Symptoms Persist',
+    desc: 'If you have persistent cough (>2 weeks), fever, night sweats, or unexplained weight loss — visit a doctor even if this screening shows Normal.',
+    urgent: false,
+  },
+]
+
+// ─── Results Page ─────────────────────────────────────────────────────────────
 
 export const ResultsPage: React.FC = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const state = location.state as ResultState | null
+  const navigate  = useNavigate()
+  const location  = useLocation()
+  const state     = location.state as ResultState | null
   const { setReport } = useReport()
 
-  // Share report with the global ChatBot for context-aware answers
   useEffect(() => {
     if (state) {
       setReport({
-        status: state.status,
-        prediction: state.model_output?.prediction,
-        score: state.model_output?.score,
-        message: state.message,
-        limitations: state.limitations,
+        status:         state.status,
+        prediction:     state.model_output?.prediction,
+        score:          state.model_output?.score,
+        message:        state.message,
+        limitations:    state.limitations,
         review_reasons: state.review_reasons,
       })
     }
-    // Clear report context when leaving the results page
     return () => setReport(null)
   }, [state, setReport])
 
-  // If no state, show error
   if (!state) {
     return (
-      <div
-        className="min-h-screen pt-24 pb-16 flex items-center justify-center"
-        style={{ background: 'var(--bg-base)' }}
-      >
+      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center"
+        style={{ background: 'var(--bg-base)' }}>
         <div className="text-center">
           <XCircle size={48} className="mx-auto mb-4" style={{ color: 'var(--text-subtle)' }} />
           <h1 className="text-xl font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
@@ -121,419 +131,300 @@ export const ResultsPage: React.FC = () => {
     )
   }
 
-  const status = state.status || 'unavailable'
-  const config = statusConfig[status]
+  const pred      = state.model_output?.prediction
+  const score     = state.model_output?.score ?? 0
+  const threshold = (state.model_output as any)?.threshold ?? 0.1453
+  const isTB      = pred === 'TB'
+  const hasResult = pred === 'TB' || pred === 'Normal'
+  const steps     = isTB ? TB_STEPS : NORMAL_STEPS
 
   return (
-    <div
-      className="min-h-screen pt-24 pb-16"
-      style={{ background: 'var(--bg-base)' }}
-    >
-      <div className="fixed inset-0 grid-bg opacity-20 pointer-events-none" />
+    <div className="min-h-screen pt-20 pb-16" style={{ background: 'var(--bg-base)' }}>
+      <div className="fixed inset-0 grid-bg opacity-10 pointer-events-none" />
 
-      <div className="container relative z-10 max-w-3xl">
+      <div className="container relative z-10" style={{ maxWidth: 860 }}>
+
         {/* Back */}
-        <motion.div
-          initial={{ opacity: 0, x: -12 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4 }}
-          className="mb-8"
-        >
-          <Button
-            variant="ghost"
-            size="sm"
-            icon={<ArrowLeft size={14} />}
-            onClick={() => navigate('/dashboard')}
-          >
-            Back to dashboard
+        <motion.div initial={{ opacity: 0, x: -12 }} animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.35 }} className="mb-6">
+          <Button variant="ghost" size="sm" icon={<ArrowLeft size={14} />}
+            onClick={() => navigate('/dashboard')}>
+            Back to Dashboard
           </Button>
         </motion.div>
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05, duration: 0.5 }}
-          className="mb-8"
-        >
-          <span
-            className="text-xs font-mono uppercase tracking-widest mb-2 block"
-            style={{ color: 'var(--text-subtle)' }}
+        {/* ── HERO RESULT BANNER ── */}
+        {hasResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05, duration: 0.5 }}
+            style={{
+              borderRadius: 24,
+              marginBottom: 28,
+              padding: '36px 40px',
+              background: isTB
+                ? 'linear-gradient(135deg, rgba(239,68,68,0.15) 0%, rgba(220,38,38,0.08) 100%)'
+                : 'linear-gradient(135deg, rgba(34,197,94,0.15) 0%, rgba(22,163,74,0.08) 100%)',
+              border: `2px solid ${isTB ? 'rgba(239,68,68,0.4)' : 'rgba(34,197,94,0.4)'}`,
+            }}
           >
-            Analysis Results
-          </span>
-          <h1
-            className="text-3xl md:text-4xl font-bold"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}
-          >
-            Screening{' '}
-            <span className="gradient-text">Report</span>
-          </h1>
-          {state.imageName && (
-            <p className="text-sm mt-2 font-mono" style={{ color: 'var(--text-muted)' }}>
-              File: {state.imageName}
-            </p>
-          )}
-        </motion.div>
+            <div className="flex items-center gap-4 mb-3">
+              <span style={{
+                fontSize: 48,
+                lineHeight: 1,
+                filter: isTB ? 'drop-shadow(0 0 12px rgba(239,68,68,0.6))' : 'drop-shadow(0 0 12px rgba(34,197,94,0.6))',
+              }}>
+                {isTB ? '⚠️' : '✅'}
+              </span>
+              <div>
+                <p className="text-xs font-mono uppercase tracking-widest mb-1"
+                  style={{ color: isTB ? 'rgba(239,68,68,0.7)' : 'rgba(34,197,94,0.7)' }}>
+                  AI Screening Result
+                </p>
+                <h1 style={{
+                  fontSize: 'clamp(28px, 5vw, 42px)',
+                  fontWeight: 800,
+                  fontFamily: 'var(--font-heading)',
+                  color: isTB ? '#EF4444' : '#22C55E',
+                  lineHeight: 1.1,
+                  letterSpacing: '-0.5px',
+                }}>
+                  {isTB ? 'TB Indicators Detected' : 'No TB Indicators Detected'}
+                </h1>
+              </div>
+            </div>
 
-        {/* Status banner */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1, duration: 0.5 }}
-          className="flex items-start gap-4 p-6 rounded-2xl mb-6"
-          style={{ background: config.bg, border: `1px solid ${config.colour}30` }}
-        >
-          <span style={{ color: config.colour }}>{config.icon}</span>
-          <div className="flex-1">
+            {/* Score bar */}
+            <div className="mt-4">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs font-mono" style={{ color: 'var(--text-subtle)' }}>
+                  TB Probability Score
+                </span>
+                <span className="text-sm font-bold font-mono" style={{
+                  color: isTB ? '#EF4444' : '#22C55E',
+                }}>
+                  {(score * 100).toFixed(1)}%
+                </span>
+              </div>
+              <div style={{
+                height: 10, borderRadius: 99,
+                background: 'rgba(255,255,255,0.08)',
+                overflow: 'hidden',
+              }}>
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${score * 100}%` }}
+                  transition={{ delay: 0.4, duration: 0.8, ease: 'easeOut' }}
+                  style={{
+                    height: '100%', borderRadius: 99,
+                    background: isTB
+                      ? 'linear-gradient(90deg, #F97316, #EF4444)'
+                      : 'linear-gradient(90deg, #22C55E, #16A34A)',
+                  }}
+                />
+              </div>
+              <div className="flex justify-between mt-1">
+                <span className="text-xs" style={{ color: 'var(--text-subtle)' }}>0%</span>
+                <span className="text-xs" style={{ color: 'var(--text-subtle)' }}>
+                  Threshold: {(threshold * 100).toFixed(1)}%
+                </span>
+                <span className="text-xs" style={{ color: 'var(--text-subtle)' }}>100%</span>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              <strong style={{ color: 'var(--text-primary)' }}>Note: </strong>
+              This is an AI screening result — not a medical diagnosis. A {isTB ? 'positive' : 'negative'} result
+              {isTB
+                ? ' does not confirm TB. Confirmatory tests are required.'
+                : ' does not rule out TB. See a doctor if you have symptoms.'}
+            </p>
+
+            {state.imageName && (
+              <p className="mt-2 text-xs font-mono" style={{ color: 'var(--text-subtle)' }}>
+                <Clock size={10} style={{ display: 'inline', marginRight: 4 }} />
+                {state.imageName} · {new Date().toLocaleString()}
+              </p>
+            )}
+          </motion.div>
+        )}
+
+        {/* ── GRAD-CAM++ SIDE-BY-SIDE ── */}
+        {state.gradcam_heatmap && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.5 }}
+            className="glass-card rounded-2xl p-6 mb-6"
+          >
             <div className="flex items-center gap-3 mb-2">
-              <h2
-                className="text-lg font-semibold"
-                style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}
-              >
-                {config.label}
+              <Brain size={18} style={{ color: 'var(--violet)' }} />
+              <h2 className="text-base font-bold" style={{ color: 'var(--text-primary)', fontFamily: 'var(--font-heading)' }}>
+                AI Attention Map — Grad-CAM++
               </h2>
-              <span className="status-chip status-chip-muted">
-                <Clock size={10} />
-                {new Date().toLocaleTimeString()}
+              <span className="status-chip status-chip-muted" style={{ fontSize: 11 }}>
+                Region the AI analyzed
               </span>
             </div>
-            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              {state.message ||
-                (status === 'unavailable'
-                  ? 'The AI model is not currently configured. No prediction was generated. This is the expected honest behaviour until the model is verified and integrated.'
-                  : 'Analysis complete.')}
+
+            <p className="text-xs mb-4" style={{ color: 'var(--text-subtle)' }}>
+              Left: Original X-ray &nbsp;|&nbsp; Right: Heatmap overlay showing which regions influenced the prediction
+            </p>
+
+            {/* Full-width side-by-side image */}
+            <div style={{
+              borderRadius: 14,
+              overflow: 'hidden',
+              border: `2px solid ${isTB ? 'rgba(239,68,68,0.35)' : 'rgba(34,197,94,0.35)'}`,
+              boxShadow: isTB
+                ? '0 4px 32px rgba(239,68,68,0.2)'
+                : '0 4px 32px rgba(34,197,94,0.2)',
+              marginBottom: 14,
+            }}>
+              <img
+                src={state.gradcam_heatmap}
+                alt="Original X-ray and Grad-CAM++ heatmap side by side"
+                style={{ width: '100%', display: 'block' }}
+              />
+            </div>
+
+            {/* Colorbar legend */}
+            <div style={{ marginBottom: 12 }}>
+              <div style={{
+                height: 12, borderRadius: 6,
+                background: 'linear-gradient(90deg, #00007F, #0000FF, #00FFFF, #00FF00, #FFFF00, #FF7F00, #FF0000)',
+              }} />
+              <div className="flex justify-between mt-1">
+                <span className="text-xs font-mono" style={{ color: 'var(--text-subtle)' }}>Low focus</span>
+                <span className="text-xs font-mono" style={{ color: 'var(--text-subtle)' }}>↑ Model Attention ↑</span>
+                <span className="text-xs font-mono" style={{ color: 'var(--text-subtle)' }}>High focus 🔴</span>
+              </div>
+            </div>
+
+            <div style={{
+              padding: '10px 14px', borderRadius: 10,
+              background: 'rgba(255,107,74,0.05)',
+              border: '1px solid rgba(255,107,74,0.12)',
+            }}>
+              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                <strong style={{ color: 'var(--text-primary)' }}>⚠️ Grad-CAM++ is a model explanation tool — not a clinical finding. </strong>
+                Red/hot zones show where the model paid attention for this prediction.
+                Only a radiologist can confirm whether these regions indicate disease.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── NEXT STEPS ── */}
+        {hasResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25, duration: 0.5 }}
+            className="glass-card rounded-2xl p-6 mb-6"
+          >
+            <h2 className="text-base font-bold mb-5" style={{
+              fontFamily: 'var(--font-heading)',
+              color: 'var(--text-primary)',
+            }}>
+              {isTB ? '🚨 Recommended Next Steps' : '✅ What to Do Next'}
+            </h2>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {steps.map((step, i) => (
+                <motion.div
+                  key={step.title}
+                  initial={{ opacity: 0, x: -12 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 + i * 0.07, duration: 0.4 }}
+                  style={{
+                    display: 'flex',
+                    gap: 14,
+                    padding: '16px 18px',
+                    borderRadius: 14,
+                    background: step.urgent
+                      ? 'rgba(239,68,68,0.06)'
+                      : 'rgba(255,255,255,0.03)',
+                    border: `1px solid ${step.urgent ? 'rgba(239,68,68,0.2)' : 'var(--border-subtle)'}`,
+                  }}
+                >
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: isTB
+                      ? (step.urgent ? 'rgba(239,68,68,0.15)' : 'rgba(255,107,74,0.1)')
+                      : 'rgba(34,197,94,0.1)',
+                    color: isTB ? (step.urgent ? '#EF4444' : 'var(--ember)') : '#22C55E',
+                  }}>
+                    {step.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+                      {step.urgent && <span style={{ color: '#EF4444' }}>[Urgent] </span>}
+                      {step.title}
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                      {step.desc}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── MODEL UNAVAILABLE ── */}
+        {state.status === 'unavailable' && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="glass-card rounded-2xl p-8 mb-6 text-center"
+          >
+            <XCircle size={48} className="mx-auto mb-4" style={{ color: 'var(--text-subtle)' }} />
+            <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+              Unable to Assess
+            </h2>
+            <p className="text-sm" style={{ color: 'var(--text-muted)', maxWidth: 420, margin: '0 auto' }}>
+              {state.message || 'The AI model could not run. This is not a negative result — please consult a doctor.'}
+            </p>
+          </motion.div>
+        )}
+
+        {/* ── DISCLAIMER ── */}
+        <motion.div
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.4 }}
+          style={{
+            padding: '14px 18px',
+            borderRadius: 14,
+            background: 'rgba(255,107,107,0.04)',
+            border: '1px solid rgba(255,107,107,0.12)',
+            marginBottom: 28,
+          }}
+        >
+          <div className="flex gap-3">
+            <AlertTriangle size={14} style={{ color: '#EF4444', flexShrink: 0, marginTop: 2 }} />
+            <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+              <strong style={{ color: '#EF4444' }}>Medical Disclaimer: </strong>
+              PulmoSure is a research prototype. This report does not constitute a medical diagnosis.
+              AI screening cannot confirm or rule out tuberculosis.
+              Always consult a qualified healthcare professional for diagnosis and treatment.
             </p>
           </div>
         </motion.div>
 
-        {/* Model output — shown when inference ran (completed or review_recommended) */}
-        {(status === 'completed' || status === 'review_recommended') && state.model_output && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.5 }}
-            className="glass-card rounded-2xl p-6 mb-6">
-            <div className="flex items-center gap-3 mb-4">
-              <Brain size={16} style={{ color: 'var(--ember)' }} />
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Screening Result
-              </h3>
-              <span className="status-chip status-chip-muted">Genuine inference result</span>
-            </div>
-
-            {/* Screening result banner — clear wording, not a diagnosis */}
-            <div
-              className="flex items-center gap-4 p-4 rounded-xl mb-4"
-              style={{
-                background:
-                  state.model_output.prediction === 'TB'
-                    ? 'rgba(251,113,133,0.08)'
-                    : 'rgba(74,222,128,0.08)',
-                border: `1px solid ${
-                  state.model_output.prediction === 'TB'
-                    ? 'rgba(251,113,133,0.25)'
-                    : 'rgba(74,222,128,0.25)'
-                }`,
-              }}
-            >
-              <span style={{
-                color: state.model_output.prediction === 'TB'
-                  ? 'var(--result-review)'
-                  : 'var(--result-success)',
-                fontSize: 22,
-              }}>
-                {state.model_output.prediction === 'TB' ? '⚠️' : '✓'}
-              </span>
-              <div>
-                <p className="font-semibold text-sm" style={{
-                  color: state.model_output.prediction === 'TB'
-                    ? 'var(--result-review)'
-                    : 'var(--result-success)',
-                  fontFamily: 'var(--font-heading)',
-                }}>
-                  {state.model_output.prediction === 'TB'
-                    ? 'TB Indicators Detected'
-                    : 'No TB Indicators Detected'}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--text-subtle)' }}>
-                  This is a screening result only — not a diagnosis
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 mb-4">
-              <div
-                className="p-4 rounded-xl text-center"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-              >
-                <p className="text-xs mb-2 font-mono" style={{ color: 'var(--text-subtle)' }}>
-                  TB-Indicator Score
-                </p>
-                <p
-                  className="text-2xl font-bold font-mono"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {(state.model_output.score * 100).toFixed(1)}%
-                </p>
-              </div>
-              <div
-                className="p-4 rounded-xl text-center"
-                style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-              >
-                <p className="text-xs mb-2 font-mono" style={{ color: 'var(--text-subtle)' }}>
-                  Decision Threshold
-                </p>
-                <p
-                  className="text-2xl font-bold font-mono"
-                  style={{ color: 'var(--text-primary)' }}
-                >
-                  {(((state.model_output as any).threshold ?? 0.5) * 100).toFixed(1)}%
-                </p>
-              </div>
-            </div>
-
-            <div
-              className="p-3 rounded-xl"
-              style={{ background: 'rgba(255,107,74,0.05)', border: '1px solid rgba(255,107,74,0.12)' }}
-            >
-              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>What this means: </strong>
-                {state.model_output.label_meaning}
-              </p>
-            </div>
-
-            <p className="text-xs mt-3" style={{ color: 'var(--text-subtle)' }}>
-              This score is not a calibrated probability. A high score does not confirm TB;
-              a low score does not rule it out. Professional assessment is required.
-            </p>
-          </motion.div>
-        )}
-
-        {/* Grad-CAM explainability — only shown when a genuine heatmap exists */}
-        {state.gradcam_heatmap && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.18, duration: 0.5 }}
-            className="glass-card rounded-2xl p-6 mb-6"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Brain size={16} style={{ color: 'var(--violet)' }} />
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Model Attention Map
-              </h3>
-              <span className="status-chip status-chip-muted">Grad-CAM explanation</span>
-            </div>
-
-            <div
-              className="rounded-xl overflow-hidden mb-3"
-              style={{ border: '1px solid rgba(139,92,246,0.2)' }}
-            >
-              <img
-                src={state.gradcam_heatmap}
-                alt="Grad-CAM model attention map — conceptual explanation, not a clinical finding"
-                style={{ width: '100%', display: 'block', borderRadius: 12 }}
-              />
-            </div>
-
-            <div
-              className="p-3 rounded-xl"
-              style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}
-            >
-              <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                <strong style={{ color: 'var(--text-primary)' }}>What this shows: </strong>
-                Highlighted regions influenced the model's output most. This is a Grad-CAM
-                visualisation generated from the actual model and your uploaded image.
-                It is a model explanation tool — it does not identify disease,
-                confirm a finding, or replace radiological assessment.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Model unavailable — explicit honest state */}
-        {status === 'unavailable' && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15, duration: 0.5 }}
-            className="glass-card rounded-2xl p-6 mb-6"
-          >
-            <div className="flex items-center gap-3 mb-3">
-              <Brain size={16} style={{ color: 'var(--text-subtle)' }} />
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Model Output
-              </h3>
-            </div>
-            <div
-              className="p-4 rounded-xl text-center"
-              style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-subtle)' }}
-            >
-              <XCircle size={32} className="mx-auto mb-3" style={{ color: 'var(--text-subtle)' }} />
-              <p className="text-sm font-semibold mb-1" style={{ color: 'var(--text-muted)' }}>
-                Model not configured
-              </p>
-              <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>
-                No prediction was generated. This is the expected honest behaviour — not a negative result.
-              </p>
-            </div>
-          </motion.div>
-        )}
-
-        {/* Reliability flags */}
-        {state.reliability_flags && state.reliability_flags.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="glass-card rounded-2xl p-6 mb-6"
-          >
-            <div className="flex items-center gap-3 mb-4">
-              <Shield size={16} style={{ color: 'var(--ember)' }} />
-              <h3 className="text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                Reliability Checks
-              </h3>
-              <span className="status-chip status-chip-muted">Prototype rules</span>
-            </div>
-            <div className="space-y-2">
-              {state.reliability_flags.map((flag) => (
-                <div
-                  key={flag.flag}
-                  className="flex items-start gap-3 text-xs py-2 px-3 rounded-lg"
-                  style={{ background: 'rgba(255,255,255,0.03)' }}
-                >
-                  <span
-                    style={{
-                      color: flag.ok ? 'var(--result-success)' : 'var(--result-caution)',
-                      flexShrink: 0,
-                      marginTop: 1,
-                    }}
-                  >
-                    {flag.ok ? <CheckCircle2 size={12} /> : <AlertTriangle size={12} />}
-                  </span>
-                  <div>
-                    <span style={{ color: 'var(--text-muted)' }}>{flag.flag}</span>
-                    {flag.note && (
-                      <span style={{ color: 'var(--text-subtle)' }}> — {flag.note}</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Review reasons */}
-        {state.review_reasons && state.review_reasons.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25, duration: 0.5 }}
-            className="rounded-2xl p-6 mb-6"
-            style={{
-              background: 'rgba(251,191,36,0.06)',
-              border: '1px solid rgba(251,191,36,0.2)',
-            }}
-          >
-            <h3
-              className="text-sm font-semibold mb-3"
-              style={{ color: 'var(--status-warning)', fontFamily: 'var(--font-heading)' }}
-            >
-              Why review was recommended
-            </h3>
-            <ul className="space-y-2">
-              {state.review_reasons.map((reason) => (
-                <li
-                  key={reason}
-                  className="flex gap-2 text-xs"
-                  style={{ color: 'var(--text-muted)' }}
-                >
-                  <AlertTriangle size={12} className="shrink-0 mt-0.5" style={{ color: 'var(--status-warning)' }} />
-                  {reason}
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        )}
-
-        {/* Next steps */}
+        {/* ── ACTIONS ── */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="glass-card rounded-2xl p-6 mb-6"
-        >
-          <h3
-            className="text-sm font-semibold mb-4"
-            style={{ fontFamily: 'var(--font-heading)', color: 'var(--text-primary)' }}
-          >
-            Responsible next steps
-          </h3>
-          <ul className="space-y-3">
-            {[
-              'Consult a qualified healthcare professional for interpretation of this screening result.',
-              'Do not delay seeking medical care if you are experiencing symptoms.',
-              'TB diagnosis requires sputum tests, clinical examination, and other investigations — not AI screening alone.',
-              'If you are experiencing severe symptoms (difficulty breathing, significant blood in cough), seek emergency care immediately.',
-            ].map((step) => (
-              <li
-                key={step}
-                className="flex gap-3 text-sm"
-                style={{ color: 'var(--text-muted)' }}
-              >
-                <CheckCircle2
-                  size={14}
-                  className="shrink-0 mt-0.5"
-                  style={{ color: 'var(--ember)' }}
-                />
-                {step}
-              </li>
-            ))}
-          </ul>
-        </motion.div>
-
-        {/* Safety disclaimer */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.35, duration: 0.5 }}
-          className="flex gap-3 p-4 rounded-xl mb-8"
-          style={{
-            background: 'rgba(255,107,107,0.05)',
-            border: '1px solid rgba(255,107,107,0.15)',
-          }}
-        >
-          <AlertTriangle size={14} className="shrink-0 mt-0.5" style={{ color: 'var(--status-danger)' }} />
-          <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-            <strong style={{ color: 'var(--status-danger)' }}>Important: </strong>
-            This report is generated by a research prototype. It does not constitute a medical diagnosis.
-            A model score — whether high or low — does not confirm or rule out tuberculosis.
-            All results require appropriate professional interpretation.
-          </p>
-        </motion.div>
-
-        {/* Actions */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.4 }}
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+          transition={{ delay: 0.55 }}
           className="flex flex-wrap gap-4"
         >
-          <Button
-            variant="primary"
-            onClick={() => navigate('/screening')}
-            icon={<Plus size={16} />}
-          >
+          <Button variant="primary" onClick={() => navigate('/screening')} icon={<Plus size={16} />}>
             New Screening
           </Button>
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/dashboard')}
-          >
+          <Button variant="secondary" onClick={() => navigate('/dashboard')}>
             Dashboard
           </Button>
         </motion.div>
+
       </div>
     </div>
   )

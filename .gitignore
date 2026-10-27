@@ -1,0 +1,101 @@
+# SwasthyaScan AI — .gitignore
+# ============================
+# Prevents secrets, large files, build artefacts, and personal data
+# from being committed to version control.
+
+# ── Python ──────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+*.whl
+
+# ── Virtual environments ─────────────────────────────────────────────────────
+.venv/
+venv/
+env/
+ENV/
+.env.local
+
+# ── Environment / secrets — NEVER COMMIT ────────────────────────────────────
+# .env files contain API keys (GROQ_API_KEY), model paths, and credentials.
+# Commit only .env.example (placeholders only).
+backend/.env
+.env
+*.env
+!*.env.example
+!backend/.env.example
+
+# ── Model weights — large binary files ───────────────────────────────────────
+# DenseNet121 checkpoint files can be 100–300 MB.
+# Store locally; do not commit to Git unless using Git LFS with a clear plan.
+model_artifacts/*.pth
+model_artifacts/*.pt
+model_artifacts/*.ckpt
+model_artifacts/*.bin
+model_artifacts/training_log.json
+model_artifacts/model_card.json
+
+# ── Datasets — never commit patient data or licensed research datasets ────────
+# Download datasets locally; document sources in DATASET_NOTES.md.
+data/raw/
+data/processed/
+*.csv
+*.json
+# Allow tracked JSON config files
+!data/*.py
+
+# ── PyTorch local wheel cache ─────────────────────────────────────────────────
+.torch_wheels/
+
+# ── Node / Frontend ──────────────────────────────────────────────────────────
+node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/build/
+*.tsbuildinfo
+
+# ── IDE and editor settings ──────────────────────────────────────────────────
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# ── Testing and coverage ─────────────────────────────────────────────────────
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.lcov
+junit*.xml
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+*.log
+logs/
+
+# ── Temporary and scratch files ──────────────────────────────────────────────
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.scratch/
+
+# ── Kaggle credentials — never commit ────────────────────────────────────────
+.kaggle/
+kaggle.json
+
+# ── Environment feature — private data (NEVER COMMIT) ────────────────────────
+# SQLite database and uploaded patient images must never enter version control.
+backend/data/swasthyascan.db
+backend/data/uploads/
+backend/data/*.db
