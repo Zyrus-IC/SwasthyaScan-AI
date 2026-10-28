@@ -2,7 +2,7 @@
  * DoctorDashboardPage — Queue of patient submissions, sorted by priority.
  * Polls every 10 seconds. Real counts only. Empty state shown.
  */
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -26,7 +26,7 @@ const STATUS_FILTERS = ["All", "Pending", "Reviewed", "Follow-up needed"];
 function PriorityBadge({ label }: { label: string }) {
   const color = PRIORITY_COLOR[label] ?? "#6b7280";
   return (
-    <span className="text-xs font-semibold px-2 py-0.5 rounded-full"
+    <span className="text-sm font-semibold px-3 py-1 rounded-full"
       style={{ background: color + "20", color, border: `1px solid ${color}40` }}>
       {label}
     </span>
@@ -120,172 +120,163 @@ export function DoctorDashboardPage() {
   const isExpired = expires < new Date();
 
   return (
-    <div className="min-h-screen px-4 py-20" style={{ background: "var(--bg-base)" }}>
-      <div className="max-w-5xl mx-auto">
+    <div className="w-full min-h-screen" style={{ background: "var(--bg-base)" }}>
+      <div style={{ maxWidth: "1360px", margin: "0 auto", padding: "6.5rem 2rem 5rem" }}>
 
-        {/* Header */}
-        <div className="glass-card rounded-2xl p-6 mb-5">
-          <div className="flex items-start justify-between flex-wrap gap-4">
+        {/* ── Header card ───────────────────────────────────── */}
+        <div className="glass-card rounded-2xl mb-6" style={{ padding: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: "1.5rem" }}>
+
+            {/* Left: title */}
             <div>
-              <p className="text-xs font-mono mb-1" style={{ color: "var(--ember)" }}>
+              <p style={{ fontSize: "0.8rem", fontFamily: "monospace", color: "var(--ember)", marginBottom: "0.4rem" }}>
                 Environment: {session.environment_id.slice(0, 8)}…
               </p>
-              <h1 className="text-xl font-bold gradient-text">Doctor Dashboard</h1>
-              <p className="text-xs mt-1" style={{ color: "var(--text-subtle)" }}>
+              <h1 style={{ fontSize: "2rem", fontWeight: 800, lineHeight: 1.2 }} className="gradient-text">
+                Doctor Dashboard
+              </h1>
+              <p style={{ fontSize: "0.85rem", marginTop: "0.4rem", color: "var(--text-subtle)" }}>
                 Session expires: {expires.toLocaleString()}
                 {isExpired && <span style={{ color: "#ef4444" }}> — EXPIRED</span>}
               </p>
             </div>
 
-            {/* Join code */}
-            <div className="flex items-center gap-2 p-3 rounded-xl"
-              style={{ background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.2)" }}>
+            {/* Right: join code box */}
+            <div style={{
+              display: "flex", alignItems: "center", gap: "1rem",
+              padding: "1.25rem 1.5rem", borderRadius: "1rem",
+              background: "rgba(251,146,60,0.08)", border: "1px solid rgba(251,146,60,0.25)",
+            }}>
               <div>
-                <p className="text-xs" style={{ color: "var(--text-subtle)" }}>Patient Join Code</p>
-                <p className="text-2xl font-mono font-bold tracking-widest"
-                  style={{ color: "var(--ember)" }}>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-subtle)", marginBottom: "0.3rem" }}>Patient Join Code</p>
+                <p style={{ fontSize: "2.5rem", fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.18em", color: "var(--ember)", lineHeight: 1 }}>
                   {session.join_code}
                 </p>
               </div>
-              <div className="flex flex-col gap-1 ml-2">
-                <button id="copy-join-code-btn" onClick={copyCode}
-                  className="p-1.5 rounded-lg text-xs"
-                  title="Copy code"
-                  style={{ background: "rgba(251,146,60,0.15)", color: "var(--ember)" }}>
-                  {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.4rem" }}>
+                <button id="copy-join-code-btn" onClick={copyCode} title="Copy code"
+                  style={{ padding: "0.5rem", borderRadius: "0.6rem", background: "rgba(251,146,60,0.15)", color: "var(--ember)", border: "none", cursor: "pointer" }}>
+                  {copied ? <CheckCircle2 size={17} /> : <Copy size={17} />}
                 </button>
-                <button id="regenerate-code-btn" onClick={handleRegenerate}
-                  className="p-1.5 rounded-lg text-xs"
-                  title="Regenerate code"
-                  style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-subtle)" }}>
-                  <RefreshCcw size={14} />
+                <button id="regenerate-code-btn" onClick={handleRegenerate} title="Regenerate code"
+                  style={{ padding: "0.5rem", borderRadius: "0.6rem", background: "rgba(255,255,255,0.06)", color: "var(--text-subtle)", border: "none", cursor: "pointer" }}>
+                  <RefreshCcw size={17} />
                 </button>
-                <button id="close-code-btn" onClick={handleClose}
-                  className="p-1.5 rounded-lg text-xs"
-                  title="Close code"
-                  style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
-                  <XCircle size={14} />
+                <button id="close-code-btn" onClick={handleClose} title="Close code"
+                  style={{ padding: "0.5rem", borderRadius: "0.6rem", background: "rgba(239,68,68,0.12)", color: "#ef4444", border: "none", cursor: "pointer" }}>
+                  <XCircle size={17} />
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+        {/* ── Stats row ─────────────────────────────────────── */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "1.5rem" }}>
           {[
-            { label: "Total",        value: counts.total        ?? 0, icon: Users,        color: "var(--ember)" },
-            { label: "Pending",      value: counts.pending      ?? 0, icon: Clock,        color: "#f97316" },
-            { label: "Reviewed",     value: counts.reviewed     ?? 0, icon: CheckCircle2, color: "#22c55e" },
-            { label: "Follow-up",    value: counts["follow-up_needed"] ?? 0, icon: TrendingUp,  color: "#a855f7" },
+            { label: "Total",     value: counts.total     ?? 0, icon: Users,        color: "var(--ember)" },
+            { label: "Pending",   value: counts.pending   ?? 0, icon: Clock,        color: "#f97316"      },
+            { label: "Reviewed",  value: counts.reviewed  ?? 0, icon: CheckCircle2, color: "#22c55e"      },
+            { label: "Follow-up", value: counts["follow-up_needed"] ?? 0, icon: TrendingUp,  color: "#a855f7" },
           ].map(s => (
-            <div key={s.label} className="glass-card rounded-xl p-4 flex items-center gap-3">
-              <s.icon size={18} style={{ color: s.color }} />
+            <div key={s.label} className="glass-card rounded-2xl"
+              style={{ padding: "1.4rem 1.5rem", display: "flex", alignItems: "center", gap: "1rem" }}>
+              <s.icon size={26} style={{ color: s.color, flexShrink: 0 }} />
               <div>
-                <p className="text-xl font-bold" style={{ color: "var(--text-primary)" }}>{s.value}</p>
-                <p className="text-xs" style={{ color: "var(--text-subtle)" }}>{s.label}</p>
+                <p style={{ fontSize: "2rem", fontWeight: 700, color: "var(--text-primary)", lineHeight: 1 }}>{s.value}</p>
+                <p style={{ fontSize: "0.8rem", color: "var(--text-subtle)", marginTop: "0.25rem" }}>{s.label}</p>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Filter + refresh */}
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <div className="flex gap-2 flex-wrap">
+        {/* ── Filter bar ────────────────────────────────────── */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "1.25rem", flexWrap: "wrap", gap: "0.75rem" }}>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             {STATUS_FILTERS.map(f => (
               <button key={f} id={`filter-${f.toLowerCase().replace(/ /g, "-")}`}
                 onClick={() => setFilter(f)}
-                className="text-xs px-3 py-1.5 rounded-lg font-medium transition-all"
                 style={{
-                  background: filter === f ? "rgba(251,146,60,0.2)" : "rgba(255,255,255,0.04)",
-                  color: filter === f ? "var(--ember)" : "var(--text-muted)",
-                  border: filter === f ? "1px solid rgba(251,146,60,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                  fontSize: "0.85rem", padding: "0.45rem 1.1rem", borderRadius: "0.65rem",
+                  fontWeight: 500, cursor: "pointer", transition: "all 0.2s",
+                  background: filter === f ? "rgba(251,146,60,0.18)" : "rgba(255,255,255,0.04)",
+                  color:      filter === f ? "var(--ember)"           : "var(--text-muted)",
+                  border:     filter === f ? "1px solid rgba(251,146,60,0.45)" : "1px solid rgba(255,255,255,0.09)",
                 }}>
                 {f}
               </button>
             ))}
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs" style={{ color: "var(--text-subtle)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-subtle)" }}>
               Last update: {lastPoll.toLocaleTimeString()}
             </span>
-            <button id="refresh-btn" onClick={fetchQueue}
-              className="p-2 rounded-lg" title="Refresh now"
-              style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
-              <RefreshCw size={14} />
+            <button id="refresh-btn" onClick={fetchQueue} title="Refresh now"
+              style={{ padding: "0.5rem", borderRadius: "0.65rem", background: "rgba(255,255,255,0.05)", color: "var(--text-muted)", border: "none", cursor: "pointer" }}>
+              <RefreshCw size={17} />
             </button>
           </div>
         </div>
 
-        {/* Error */}
+        {/* ── Error ─────────────────────────────────────────── */}
         {error && (
-          <div className="p-3 rounded-xl mb-4 flex items-center gap-2"
-            style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
-            <AlertTriangle size={14} style={{ color: "#ef4444" }} />
-            <p className="text-xs" style={{ color: "#ef4444" }}>{error}</p>
+          <div style={{ padding: "1rem 1.25rem", borderRadius: "0.75rem", marginBottom: "1.25rem",
+            display: "flex", alignItems: "center", gap: "0.75rem",
+            background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+            <AlertTriangle size={17} style={{ color: "#ef4444", flexShrink: 0 }} />
+            <p style={{ fontSize: "0.85rem", color: "#ef4444" }}>{error}</p>
           </div>
         )}
 
-        {/* Queue */}
+        {/* ── Queue ─────────────────────────────────────────── */}
         {loading ? (
-          <div className="text-center py-16" style={{ color: "var(--text-subtle)" }}>
+          <div style={{ textAlign: "center", padding: "5rem 0", fontSize: "0.95rem", color: "var(--text-subtle)" }}>
             Loading submissions…
           </div>
         ) : submissions.length === 0 ? (
-          <div className="glass-card rounded-2xl p-12 text-center">
-            <Users size={40} style={{ color: "var(--text-subtle)", margin: "0 auto 12px" }} />
-            <p className="text-sm font-semibold" style={{ color: "var(--text-muted)" }}>
-              No submissions yet
-            </p>
-            <p className="text-xs mt-1" style={{ color: "var(--text-subtle)" }}>
+          <div className="glass-card rounded-2xl" style={{ padding: "4rem 2rem", textAlign: "center" }}>
+            <Users size={52} style={{ color: "var(--text-subtle)", margin: "0 auto 1rem" }} />
+            <p style={{ fontSize: "1.05rem", fontWeight: 600, color: "var(--text-muted)" }}>No submissions yet</p>
+            <p style={{ fontSize: "0.85rem", marginTop: "0.5rem", color: "var(--text-subtle)" }}>
               Share the join code <strong>{session.join_code}</strong> with your patients.
             </p>
           </div>
         ) : (
           <AnimatePresence>
-            <div className="space-y-3">
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
               {submissions.map((sub, i) => (
                 <motion.div key={sub.id}
                   initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.04 }}
                   onClick={() => navigate(`/env/doctor/submission/${sub.id}`)}
-                  className="glass-card rounded-xl p-4 cursor-pointer hover:border-ember/30 transition-all"
-                  style={{ borderColor: "rgba(255,255,255,0.08)" }}>
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold"
-                        style={{ background: "rgba(251,146,60,0.12)", color: "var(--ember)" }}>
+                  className="glass-card rounded-2xl"
+                  style={{ padding: "1.25rem 1.5rem", cursor: "pointer", borderColor: "rgba(255,255,255,0.08)" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                      <div style={{
+                        width: 44, height: 44, borderRadius: "50%",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: "0.9rem", fontWeight: 700, flexShrink: 0,
+                        background: "rgba(251,146,60,0.12)", color: "var(--ember)",
+                      }}>
                         {sub.pseudonym.slice(0, 2).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-                          {sub.pseudonym}
-                        </p>
-                        <p className="text-xs" style={{ color: "var(--text-subtle)" }}>
+                        <p style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--text-primary)" }}>{sub.pseudonym}</p>
+                        <p style={{ fontSize: "0.8rem", marginTop: "0.2rem", color: "var(--text-subtle)" }}>
                           {new Date(sub.created_at).toLocaleString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                       <PriorityBadge label={sub.override_label ?? sub.priority_label} />
-                      <span className="text-xs px-2 py-0.5 rounded-full"
-                        style={{
-                          background: sub.status === "Pending"
-                            ? "rgba(251,146,60,0.1)"
-                            : sub.status === "Reviewed"
-                            ? "rgba(34,197,94,0.1)"
-                            : "rgba(168,85,247,0.1)",
-                          color: sub.status === "Pending"
-                            ? "#f97316"
-                            : sub.status === "Reviewed"
-                            ? "#22c55e"
-                            : "#a855f7",
-                        }}>
-                        {sub.status}
-                      </span>
+                      <span style={{
+                        fontSize: "0.8rem", padding: "0.25rem 0.75rem", borderRadius: "999px",
+                        background: sub.status === "Pending" ? "rgba(251,146,60,0.1)" : sub.status === "Reviewed" ? "rgba(34,197,94,0.1)" : "rgba(168,85,247,0.1)",
+                        color:      sub.status === "Pending" ? "#f97316"               : sub.status === "Reviewed" ? "#22c55e"              : "#a855f7",
+                      }}>{sub.status}</span>
                       {sub.released_guidance && (
-                        <span className="text-xs px-2 py-0.5 rounded-full"
-                          style={{ background: "rgba(59,130,246,0.1)", color: "#60a5fa" }}>
+                        <span style={{ fontSize: "0.8rem", padding: "0.25rem 0.75rem", borderRadius: "999px", background: "rgba(59,130,246,0.1)", color: "#60a5fa" }}>
                           Note sent
                         </span>
                       )}
@@ -297,34 +288,36 @@ export function DoctorDashboardPage() {
           </AnimatePresence>
         )}
 
-        {/* Danger zone */}
-        <div className="mt-8 p-4 rounded-xl"
-          style={{ border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.04)" }}>
-          <p className="text-xs font-bold mb-2" style={{ color: "#ef4444" }}>Danger Zone</p>
+        {/* ── Danger zone ───────────────────────────────────── */}
+        <div style={{ marginTop: "2.5rem", padding: "1.5rem", borderRadius: "1rem",
+          border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.04)" }}>
+          <p style={{ fontSize: "0.85rem", fontWeight: 700, color: "#ef4444", marginBottom: "0.75rem" }}>Danger Zone</p>
           {!showDeleteConfirm ? (
             <button id="delete-env-btn" onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 text-xs px-4 py-2 rounded-lg"
-              style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
-              <Trash2 size={13} /> Delete Environment &amp; All Data
+              style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem",
+                padding: "0.6rem 1.25rem", borderRadius: "0.65rem", cursor: "pointer",
+                background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "1px solid rgba(239,68,68,0.3)" }}>
+              <Trash2 size={15} /> Delete Environment &amp; All Data
             </button>
           ) : (
-            <div className="flex items-center gap-3 flex-wrap">
-              <p className="text-xs" style={{ color: "#ef4444" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
+              <p style={{ fontSize: "0.85rem", color: "#ef4444" }}>
                 This will permanently delete all submissions, images, and data. Are you sure?
               </p>
               <button id="confirm-delete-btn" onClick={handleDelete} disabled={deleting}
-                className="text-xs px-4 py-2 rounded-lg"
-                style={{ background: "#ef4444", color: "white" }}>
+                style={{ fontSize: "0.85rem", padding: "0.6rem 1.25rem", borderRadius: "0.65rem",
+                  background: "#ef4444", color: "white", border: "none", cursor: "pointer" }}>
                 {deleting ? "Deleting…" : "Yes, Delete Everything"}
               </button>
               <button onClick={() => setShowDeleteConfirm(false)}
-                className="text-xs px-4 py-2 rounded-lg"
-                style={{ background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
+                style={{ fontSize: "0.85rem", padding: "0.6rem 1.25rem", borderRadius: "0.65rem",
+                  background: "rgba(255,255,255,0.05)", color: "var(--text-muted)", border: "none", cursor: "pointer" }}>
                 Cancel
               </button>
             </div>
           )}
         </div>
+
       </div>
     </div>
   );

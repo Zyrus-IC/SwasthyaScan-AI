@@ -1,0 +1,16 @@
+# backend/.gitignore
+.env
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.pytest_cache/
+htmlcov/
+.coverage
+*.log
+data/uploads/
+data/*.db

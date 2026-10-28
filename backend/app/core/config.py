@@ -73,7 +73,7 @@ class Settings(BaseSettings):
     # ── Groq chatbot ──────────────────────────────────────────────────────────
     # Server-side only. Never expose this in the frontend or logs.
     groq_api_key: str = ""
-    groq_model: str = "llama-3.1-8b-instant"  # configurable; use a currently supported model
+    groq_model: str = "qwen/qwen3.8-27b"  # configurable; currently supported model on Groq
     chat_max_tokens: int = 800
     chat_temperature: float = 0.4
     chat_max_history: int = 10  # max prior messages to send for context
@@ -82,6 +82,19 @@ class Settings(BaseSettings):
     def groq_configured(self) -> bool:
         """True only when a non-empty Groq API key is set."""
         return bool(self.groq_api_key.strip())
+
+    # ── Email OTP Configuration (Gmail SMTP) ─────────────────────────────────
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""        # e.g. your_account@gmail.com
+    smtp_password: str = ""    # 16-character Google App Password
+    smtp_from_name: str = "SwasthyaScan AI Security"
+
+    # ── SMS OTP Configuration (Fast2SMS / Twilio) ───────────────────────────
+    fast2sms_api_key: str = ""     # Fast2SMS Quick OTP key
+    twilio_account_sid: str = ""
+    twilio_auth_token: str = ""
+    twilio_from_phone: str = ""
 
     # ── Application metadata ─────────────────────────────────────────────────
     app_name: str = "SwasthyaScan AI"

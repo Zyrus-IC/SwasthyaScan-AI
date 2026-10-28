@@ -4,7 +4,7 @@
  * All doctor requests attach X-Session-Token header.
  */
 
-const BASE = "http://localhost:8000/api/env";
+const BASE = "/api/env";
 
 function authHeaders(token: string) {
   return { "X-Session-Token": token };
@@ -222,7 +222,7 @@ export interface SubmissionDetail {
     threshold: number;
     analysis_status: string;
   } | null;
-  reliability_flags: Array<{ flag: string; severity: string; detail: string }>;
+  reliability_flags: Array<{ flag: string; ok?: boolean; note?: string | null; severity?: string; detail?: string }>;
   priority_label: string;
   priority_reasons: string[];
   override_label: string | null;

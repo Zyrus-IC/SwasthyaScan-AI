@@ -23,6 +23,7 @@ from app.api import health as health_router
 from app.api import screening as screening_router
 from app.api import chat as chat_router
 from app.api import environment as environment_router
+from app.api import auth as auth_router
 from app.core.config import settings
 from app.db.database import init_db
 from app.services import model_service
@@ -111,11 +112,12 @@ app.add_middleware(
     allow_origins=settings.cors_origins_list,
     allow_credentials=False,
     allow_methods=["GET", "POST", "DELETE"],
-    allow_headers=["Content-Type", "Accept", "X-Session-Token"],
+    allow_headers=["Content-Type", "Accept", "X-Session-Token", "Authorization"],
 )
 
 # ── Routers ───────────────────────────────────────────────────────────────────
 app.include_router(health_router.router)
+app.include_router(auth_router.router)
 app.include_router(screening_router.router)
 app.include_router(chat_router.router)
 app.include_router(environment_router.router)

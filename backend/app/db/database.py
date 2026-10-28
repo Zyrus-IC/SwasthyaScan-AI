@@ -91,6 +91,25 @@ CREATE TABLE IF NOT EXISTS rate_limit (
     locked_until TEXT                       -- ISO-8601 UTC or NULL
 );
 
+CREATE TABLE IF NOT EXISTS users (
+    id            TEXT PRIMARY KEY,          -- usr_<hex12>
+    email         TEXT UNIQUE NOT NULL,      -- normalized lowercase email
+    username      TEXT UNIQUE,               -- unique handle e.g. 'thangam'
+    password_hash TEXT,                      -- sha256 hex
+    password_salt TEXT,                      -- hex salt
+    created_at    TEXT NOT NULL,             -- ISO-8601 UTC
+    updated_at    TEXT NOT NULL              -- ISO-8601 UTC
+);
+
+CREATE TABLE IF NOT EXISTS auth_sessions (
+    token         TEXT PRIMARY KEY,          -- 256-bit urlsafe token
+    user_id       TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at    TEXT NOT NULL,
+    expires_at    REAL NOT NULL              -- unix timestamp
+);
+
 CREATE INDEX IF NOT EXISTS idx_submissions_env ON submissions(environment_id, created_at);
 CREATE INDEX IF NOT EXISTS idx_sessions_env    ON sessions(environment_id, expires_at);
+CREATE INDEX IF NOT EXISTS idx_users_email     ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username  ON users(username);
 """

@@ -26,16 +26,19 @@ import {
 import { Button } from '../components/ui/Button'
 import { GlassCard, GlassPanel } from '../components/ui/Glass'
 import { BackgroundVideo } from '../components/BackgroundVideo'
+import { useLanguage } from '../context/LanguageContext'
+import { useAuth } from '../context/AuthContext'
+import { HeroAuthCard } from '../components/HeroAuthCard'
 
 // ─── Constants ────────────────────────────────────────────────
 const ease = [0.16, 1, 0.3, 1] as const
 
 const SCENES = [
-  { id: 'hero',        label: 'Intro'           },
-  { id: 'problem',     label: 'The Problem'     },
-  { id: 'innovation',  label: 'Core Innovation' },
-  { id: 'workflow',    label: 'How It Works'    },
-  { id: 'cta',         label: 'Get Started'     },
+  { id: 'hero',         label: 'Intro'           },
+  { id: 'problem',      label: 'The Problem'     },
+  { id: 'innovation',   label: 'Core Innovation' },
+  { id: 'how-it-works', label: 'How It Works'    },
+  { id: 'cta',          label: 'Get Started'     },
 ]
 
 // ─── Scene enter animation variants ──────────────────────────
@@ -119,7 +122,7 @@ function StatusPill() {
     let cancelled = false
     const check = async () => {
       try {
-        const r = await fetch('http://localhost:8000/health', { signal: AbortSignal.timeout(3000) })
+        const r = await fetch('/health', { signal: AbortSignal.timeout(3000) })
         if (cancelled) return
         if (r.ok) {
           const d = await r.json()
@@ -187,96 +190,183 @@ function StatusPill() {
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 function SceneHero({ onNext }: { onNext: () => void }) {
   const navigate = useNavigate()
+  const { t } = useLanguage()
+  const { isAuthenticated } = useAuth()
+
   return (
     <div className="snap-scene" id="hero">
-      {/* Text-readability gradient on left ”” lungs visible on right */}
+      {/* Text-readability gradient on left — lungs visible on right */}
       <div className="absolute inset-0 pointer-events-none" style={{
-        background: 'linear-gradient(108deg, rgba(10,8,7,0.96) 0%, rgba(10,8,7,0.88) 36%, rgba(10,8,7,0.55) 62%, rgba(10,8,7,0.12) 85%, transparent 100%)',
+        background: isAuthenticated
+          ? 'linear-gradient(108deg, rgba(10,8,7,0.96) 0%, rgba(10,8,7,0.88) 36%, rgba(10,8,7,0.55) 62%, rgba(10,8,7,0.12) 85%, transparent 100%)'
+          : 'linear-gradient(108deg, rgba(10,8,7,0.97) 0%, rgba(10,8,7,0.90) 45%, rgba(10,8,7,0.60) 80%, transparent 100%)',
         zIndex: 0,
       }} />
 
-      <div className="container relative" style={{ zIndex: 1, width: '100%' }}>
-        <div style={{ maxWidth: 660 }}>
-          <SceneContent>
+      <div className="container relative" style={{ zIndex: 1, width: '100%', paddingTop: !isAuthenticated ? '2rem' : 0 }}>
+        {isAuthenticated ? (
+          <div style={{ maxWidth: 660 }}>
+            <SceneContent>
 
+              {/* AI Platform Pill */}
+              <Item>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  fontFamily: 'var(--font-mono)', fontSize: 'var(--text-mono)',
+                  letterSpacing: '0.08em', textTransform: 'uppercase',
+                  color: 'var(--ember)',
+                  background: 'rgba(255,107,74,0.09)',
+                  border: '1px solid rgba(255,107,74,0.22)',
+                  borderRadius: 999, padding: '5px 14px',
+                  marginBottom: 20, whiteSpace: 'nowrap',
+                }}>
+                  <Shield size={13} style={{ color: 'var(--ember)' }} /> {t.hero.badge}
+                </span>
+              </Item>
 
-            {/* H1 ”” 12ch max â†’ 2 clean lines */}
-            <Item>
-              <h1 style={{
-                fontFamily: 'var(--font-display)',
-                fontWeight: 800,
-                fontSize: 'clamp(2.75rem, 1.6rem + 4.6vw, 5.5rem)',
-                lineHeight: 1.08,
-                letterSpacing: '-0.02em',
-                color: 'var(--text-primary)',
-                marginBottom: 24,
-                maxWidth: '12ch',
-              }}>
-                Every Breath Matters.{' '}
-                <span className="gradient-text">Every Second Counts.</span>
-              </h1>
-            </Item>
+              {/* H1 */}
+              <Item>
+                <h1 style={{
+                  fontFamily: 'var(--font-display)',
+                  fontWeight: 800,
+                  fontSize: 'clamp(2.5rem, 1.5rem + 4.2vw, 5.2rem)',
+                  lineHeight: 1.08,
+                  letterSpacing: '-0.02em',
+                  color: 'var(--text-primary)',
+                  marginBottom: 24,
+                  maxWidth: '14ch',
+                }}>
+                  {t.hero.headline1}{' '}
+                  <span className="gradient-text">{t.hero.headline2}</span>
+                </h1>
+              </Item>
 
-            {/* Subline ”” one sentence */}
-            <Item>
-              <p style={{
-                fontFamily: 'var(--font-body)',
-                fontSize: 'clamp(1.0625rem, 1rem + 0.3vw, 1.25rem)',
-                color: 'var(--text-secondary)',
-                lineHeight: 1.65,
-                maxWidth: 500,
-                marginBottom: 36,
-              }}>
-                SwasthyaScan AI doesn't just predict — it reports what it knows,
-                what it doesn't, and when a clinician must decide.
-              </p>
-            </Item>
+              {/* Subline */}
+              <Item>
+                <p style={{
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'clamp(1.0625rem, 1rem + 0.3vw, 1.25rem)',
+                  color: 'var(--text-secondary)',
+                  lineHeight: 1.65,
+                  maxWidth: 500,
+                  marginBottom: 36,
+                }}>
+                  {t.hero.subheading}
+                </p>
+              </Item>
 
-            {/* CTAs */}
-            <Item>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 36 }}>
-                <Button variant="primary" size="lg"
-                  iconRight={<ArrowRight size={16} />}
-                  onClick={() => navigate('/screening')}
-                >
-                  Start Screening
-                </Button>
-                <Button variant="glass" size="lg" onClick={onNext}>
-                  How It Works
-                </Button>
-              </div>
-            </Item>
+              {/* CTAs */}
+              <Item>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 36 }}>
+                  <Button variant="primary" size="lg"
+                    iconRight={<ArrowRight size={16} />}
+                    onClick={() => navigate('/screening')}
+                  >
+                    {t.hero.ctaScreening}
+                  </Button>
+                  <Button variant="glass" size="lg" onClick={onNext}>
+                    {t.hero.ctaHowItWorks}
+                  </Button>
+                </div>
+              </Item>
 
-            {/* Status pill */}
-            <Item>
-              <StatusPill />
-            </Item>
-          </SceneContent>
-        </div>
+              {/* Status pill */}
+              <Item>
+                <StatusPill />
+              </Item>
+            </SceneContent>
+          </div>
+        ) : (
+          /* Gated Auth Layout: Brand on left, Secure Login Card on right */
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: 40,
+            alignItems: 'center',
+            minHeight: '80vh',
+            paddingTop: '2.5rem',
+          }}>
+            <div style={{ maxWidth: 540 }}>
+              <SceneContent>
+                <Item>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    fontFamily: 'var(--font-mono)', fontSize: 'var(--text-mono)',
+                    letterSpacing: '0.08em', textTransform: 'uppercase',
+                    color: 'var(--ember)',
+                    background: 'rgba(255,107,74,0.09)',
+                    border: '1px solid rgba(255,107,74,0.22)',
+                    borderRadius: 999, padding: '5px 14px',
+                    marginBottom: 18, whiteSpace: 'nowrap',
+                  }}>
+                    <Shield size={13} style={{ color: 'var(--ember)' }} /> {t.hero.badge}
+                  </span>
+                </Item>
+
+                <Item>
+                  <h1 style={{
+                    fontFamily: 'var(--font-display)',
+                    fontWeight: 800,
+                    fontSize: 'clamp(2.2rem, 1.3rem + 3.4vw, 4.2rem)',
+                    lineHeight: 1.1,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--text-primary)',
+                    marginBottom: 20,
+                  }}>
+                    {t.hero.headline1}{' '}
+                    <span className="gradient-text">{t.hero.headline2}</span>
+                  </h1>
+                </Item>
+
+                <Item>
+                  <p style={{
+                    fontFamily: 'var(--font-body)',
+                    fontSize: '1.05rem',
+                    color: 'var(--text-secondary)',
+                    lineHeight: 1.6,
+                    marginBottom: 24,
+                  }}>
+                    {t.hero.subheading}
+                  </p>
+                </Item>
+
+                <Item>
+                  <StatusPill />
+                </Item>
+              </SceneContent>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <HeroAuthCard />
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Scroll indicator */}
-      <motion.button
-        onClick={onNext}
-        aria-label="Scroll to next scene"
-        animate={{ y: [0, 8, 0] }}
-        transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-        style={{
-          position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 2, color: 'var(--text-faint)',
-          background: 'none', border: 'none', cursor: 'pointer', padding: 8,
-        }}
-      >
-        <ChevronDown size={22} />
-      </motion.button>
+      {/* Scroll indicator — only when authenticated */}
+      {isAuthenticated && (
+        <motion.button
+          onClick={onNext}
+          aria-label="Scroll to next scene"
+          animate={{ y: [0, 8, 0] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          style={{
+            position: 'absolute', bottom: 28, left: '50%', transform: 'translateX(-50%)',
+            zIndex: 2, color: 'var(--text-faint)',
+            background: 'none', border: 'none', cursor: 'pointer', padding: 8,
+          }}
+        >
+          <ChevronDown size={22} />
+        </motion.button>
+      )}
 
-      {/* Disclaimer ”” absolute bottom, centred, never overlapping content */}
+      {/* Disclaimer */}
       <p className="disclaimer-notice" style={{
         position: 'absolute', bottom: 8, width: '100%', textAlign: 'center', zIndex: 2,
         paddingInline: 'clamp(20px, 5vw, 96px)',
         fontSize: '0.72rem',
       }}>
-        <><AlertTriangle size={13} style={{ display: 'inline', verticalAlign: 'text-top', marginRight: 6, color: 'var(--result-caution)' }} />Research prototype only &mdash; not a clinically validated medical device. Requires professional interpretation.</>
+        <><AlertTriangle size={13} style={{ display: 'inline', verticalAlign: 'text-top', marginRight: 6, color: 'var(--result-caution)' }} />AI-assisted screening support &mdash; requires professional medical interpretation.</>
       </p>
     </div>
   )
@@ -304,10 +394,47 @@ const PROBLEMS = [
 ]
 
 function SceneProblem() {
+  const { t } = useLanguage()
+
+  const problems = [
+    {
+      icon: <AlertTriangle size={22} style={{ color: 'var(--result-review)' }} />,
+      val: t.problem.card1Val,
+      label: t.problem.card1Label,
+      desc: t.problem.card1Desc,
+    },
+    {
+      icon: <Eye size={22} style={{ color: 'var(--result-caution)' }} />,
+      val: t.problem.card2Val,
+      label: t.problem.card2Label,
+      desc: t.problem.card2Desc,
+    },
+    {
+      icon: <Users size={22} style={{ color: 'var(--ember)' }} />,
+      val: t.problem.card3Val,
+      label: t.problem.card3Label,
+      desc: t.problem.card3Desc,
+    },
+  ]
+
   return (
     <div className="snap-scene" id="problem" style={{ background: 'rgba(10,8,7,0.75)' }}>
       <div className="container" style={{ width: '100%', zIndex: 1, position: 'relative' }}>
         <SceneContent>
+          <Item>
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontFamily: 'var(--font-mono)', fontSize: 'var(--text-mono)',
+              letterSpacing: '0.10em', textTransform: 'uppercase',
+              color: 'var(--ember)',
+              background: 'rgba(255,107,74,0.09)',
+              border: '1px solid rgba(255,107,74,0.22)',
+              borderRadius: 999, padding: '5px 14px',
+              marginBottom: 20, whiteSpace: 'nowrap',
+            }}>
+              <AlertCircle size={13} style={{ color: 'var(--ember)' }} /> {t.problem.tag}
+            </span>
+          </Item>
           <Item>
             <h2 style={{
               fontFamily: 'var(--font-display)', fontWeight: 800,
@@ -315,8 +442,7 @@ function SceneProblem() {
               lineHeight: 1.1, letterSpacing: '-0.025em',
               marginBottom: 16,
             }}>
-              TB screening is{' '}
-              <span className="gradient-text">not that simple.</span>
+              {t.problem.title}
             </h2>
           </Item>
           <Item>
@@ -324,19 +450,18 @@ function SceneProblem() {
               fontFamily: 'var(--font-body)',
               fontSize: 'clamp(1.0625rem, 1rem + 0.3vw, 1.25rem)',
               color: 'var(--text-secondary)', lineHeight: 1.65,
-              maxWidth: 560, marginBottom: 40,
+              maxWidth: 620, marginBottom: 40,
             }}>
-              AI can help — but a prediction without reliability context
-              can mislead as much as it helps.
+              {t.problem.desc}
             </p>
           </Item>
 
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))',
             gap: 'clamp(16px, 2.5vw, 28px)',
           }}>
-            {PROBLEMS.map((p, i) => (
+            {problems.map((p, i) => (
               <Item key={i}>
                 <GlassCard variant="interactive" spotlight tilt
                   className="rounded-[var(--r-lg)] h-full"
@@ -351,15 +476,25 @@ function SceneProblem() {
                   }}>
                     {p.icon}
                   </div>
+                  <div style={{
+                    fontFamily: 'var(--font-display)',
+                    fontSize: 'clamp(1.6rem, 1.4rem + 0.8vw, 2.1rem)',
+                    fontWeight: 800, letterSpacing: '-0.02em',
+                    color: 'var(--ember)',
+                    marginBottom: 6,
+                  }}>
+                    {p.val}
+                  </div>
                   <h3 style={{
                     fontFamily: 'var(--font-display)',
-                    fontSize: 'clamp(1.125rem, 1.05rem + 0.3vw, 1.375rem)',
+                    fontSize: 'clamp(1.05rem, 1rem + 0.2vw, 1.25rem)',
                     fontWeight: 700, letterSpacing: '-0.015em', marginBottom: 10,
+                    color: 'var(--text-primary)',
                   }}>
-                    {p.title}
+                    {p.label}
                   </h3>
-                  <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', fontSize: '1rem', lineHeight: 1.65 }}>
-                    {p.body}
+                  <p style={{ fontFamily: 'var(--font-body)', color: 'var(--text-secondary)', fontSize: '0.95rem', lineHeight: 1.65 }}>
+                    {p.desc}
                   </p>
                 </GlassCard>
               </Item>
@@ -483,7 +618,7 @@ function SceneWorkflow() {
   }, [])
 
   return (
-    <div className="snap-scene" id="workflow" style={{ background: 'rgba(10,8,7,0.80)' }}>
+    <div className="snap-scene" id="how-it-works" style={{ background: 'rgba(10,8,7,0.80)' }}>
       <div className="container" style={{ width: '100%', zIndex: 1, position: 'relative' }}>
         <SceneContent>
           <Item style={{ textAlign: 'center', marginBottom: 'clamp(24px,4vw,44px)' }}>
@@ -622,8 +757,8 @@ function SceneWorkflow() {
 // SCENE 5 ”” RESPONSIBLE USE + CTA
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 const IS_ITEMS = [
-  'A reliability-aware screening support prototype',
-  'A research demonstration',
+  'A reliability-aware screening support tool',
+  'A clinical AI screening platform',
   'A tool that tells you when it\'s uncertain',
   'Designed for clinician-in-the-loop workflows',
 ]
@@ -731,12 +866,14 @@ function SceneCTA() {
 // ROOT PAGE COMPONENT
 // â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 export function LandingPage() {
+  const { isAuthenticated } = useAuth()
   const [activeScene, setActiveScene] = useState(0)
   const containerRef = useRef<HTMLDivElement>(null)
   const scenesRef = useRef<HTMLDivElement[]>([])
 
   /* ── Track active scene via IntersectionObserver ─────────── */
   useEffect(() => {
+    if (!isAuthenticated) return
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach(e => {
@@ -751,7 +888,7 @@ export function LandingPage() {
     const scenes = containerRef.current?.querySelectorAll('[id]')
     scenes?.forEach(el => observer.observe(el))
     return () => observer.disconnect()
-  }, [])
+  }, [isAuthenticated])
 
   /* ── Scroll to scene by index ────────────────────────────── */
   const scrollToScene = useCallback((i: number) => {
@@ -763,11 +900,11 @@ export function LandingPage() {
 
   return (
     <>
-      {/* Fixed lung video ”” plays behind everything */}
+      {/* Fixed lung video — plays behind everything */}
       <BackgroundVideo scrimBase={0.22} scrimMax={0.65} />
 
-      {/* Right-side progress dots */}
-      <ProgressDots active={activeScene} onDotClick={scrollToScene} />
+      {/* Right-side progress dots — only when authenticated */}
+      {isAuthenticated && <ProgressDots active={activeScene} onDotClick={scrollToScene} />}
 
       {/* Scroll-snap container */}
       <div
@@ -776,10 +913,14 @@ export function LandingPage() {
         style={{ position: 'relative' }}
       >
         <SceneHero onNext={() => scrollToScene(1)} />
-        <SceneProblem />
-        <SceneInnovation />
-        <SceneWorkflow />
-        <SceneCTA />
+        {isAuthenticated && (
+          <>
+            <SceneProblem />
+            <SceneInnovation />
+            <SceneWorkflow />
+            <SceneCTA />
+          </>
+        )}
       </div>
     </>
   )

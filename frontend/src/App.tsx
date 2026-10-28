@@ -1,8 +1,11 @@
 import React, { useEffect } from 'react'
-import { Routes, Route, useLocation } from 'react-router-dom'
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 
+import { LanguageProvider } from './context/LanguageContext'
+import { AuthProvider, useAuth } from './context/AuthContext'
 import { Navbar }           from './components/Navbar'
+import { AccountNameModal } from './components/AccountNameModal'
 import { ScrollProgressBar } from './components/ScrollProgressBar'
 import { CustomCursor }     from './components/CustomCursor'
 import { ChatBot }          from './components/ChatBot'
@@ -48,10 +51,18 @@ function ScrollToTop() {
   return null
 }
 
-function App() {
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, loading } = useAuth()
+  if (loading) return null
+  if (!isAuthenticated) return <Navigate to="/" replace />
+  return <>{children}</>
+}
+
+function AppContent() {
   const location  = useLocation()
   const isLanding = location.pathname === '/'
   const { report } = useReport()
+  const { isAuthenticated } = useAuth()
 
   // Env pages don't need smooth scroll
   const isEnvPage = location.pathname.startsWith('/env/')
@@ -60,10 +71,13 @@ function App() {
   return (
     <>
       <CustomCursor />
-      {!isLanding && <ScrollProgressBar />}
+      {!isLanding && isAuthenticated && <ScrollProgressBar />}
       <Navbar />
+      <AccountNameModal />
       <ScrollToTop />
-      <ChatBot report={report} />
+
+      {/* Floating Chatbot ONLY visible after user logs in */}
+      {isAuthenticated && <ChatBot report={report} />}
 
       <AnimatePresence mode="wait">
         <motion.div
@@ -74,24 +88,26 @@ function App() {
           exit="exit"
         >
           <Routes location={location}>
-            {/* ── Core pages ── */}
+            {/* ── Public Auth Gate & Landing ── */}
             <Route path="/"             element={<LandingPage />}      />
-            <Route path="/dashboard"    element={<DashboardPage />}    />
-            <Route path="/screening"    element={<ScreeningPage />}    />
-            <Route path="/results"      element={<ResultsPage />}      />
-            <Route path="/about"        element={<AboutPage />}        />
             <Route path="/design-system" element={<DesignSystemPage />} />
+
+            {/* ── Protected Core Pages (Requires Mobile/Email Login) ── */}
+            <Route path="/dashboard"    element={<ProtectedRoute><DashboardPage /></ProtectedRoute>}    />
+            <Route path="/screening"    element={<ProtectedRoute><ScreeningPage /></ProtectedRoute>}    />
+            <Route path="/results"      element={<ProtectedRoute><ResultsPage /></ProtectedRoute>}      />
+            <Route path="/about"        element={<ProtectedRoute><AboutPage /></ProtectedRoute>}        />
 
             {/* ── Patient flow ── */}
             <Route path="/env/join"           element={<JoinEnvironmentPage />}    />
-            <Route path="/env/consent"        element={<ConsentPage />}            />
-            <Route path="/env/patient-submit" element={<PatientSubmissionPage />}  />
-            <Route path="/env/confirmation"   element={<PatientConfirmationPage />} />
+            <Route path="/env/consent"        element={<ProtectedRoute><ConsentPage /></ProtectedRoute>}            />
+            <Route path="/env/patient-submit" element={<ProtectedRoute><PatientSubmissionPage /></ProtectedRoute>}  />
+            <Route path="/env/confirmation"   element={<ProtectedRoute><PatientConfirmationPage /></ProtectedRoute>} />
 
             {/* ── Doctor flow ── */}
-            <Route path="/env/doctor"                        element={<DoctorPortalPage />}      />
-            <Route path="/env/doctor/dashboard"              element={<DoctorDashboardPage />}   />
-            <Route path="/env/doctor/submission/:subId"      element={<SubmissionDetailPage />}  />
+            <Route path="/env/doctor"                        element={<ProtectedRoute><DoctorPortalPage /></ProtectedRoute>}      />
+            <Route path="/env/doctor/dashboard"              element={<ProtectedRoute><DoctorDashboardPage /></ProtectedRoute>}   />
+            <Route path="/env/doctor/submission/:subId"      element={<ProtectedRoute><SubmissionDetailPage /></ProtectedRoute>}  />
 
             {/* 404 */}
             <Route path="*" element={
@@ -110,6 +126,16 @@ function App() {
         </motion.div>
       </AnimatePresence>
     </>
+  )
+}
+
+function App() {
+  return (
+    <LanguageProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </LanguageProvider>
   )
 }
 

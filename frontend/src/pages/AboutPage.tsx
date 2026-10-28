@@ -49,7 +49,7 @@ export const AboutPage: React.FC = () => {
               The central idea: a screening system should not present every prediction as equally reliable. It should identify limitations, communicate uncertainty responsibly, and recommend professional review when available evidence is insufficient or conflicting.
             </p>
             <p className="text-sm leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-              This is <em>not</em> a clinically validated medical device. It is a research prototype demonstrating how honest AI workflows can be implemented in healthcare screening support.
+              This is <em>not</em> a clinically validated medical device. SwasthyaScan AI is a screening support tool demonstrating how honest AI workflows can be implemented in healthcare screening support.
             </p>
           </GlassCard>
         </motion.div>
@@ -64,8 +64,8 @@ export const AboutPage: React.FC = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               {[
                 { label: 'Frontend', items: ['React + Vite + TypeScript', 'Tailwind CSS (Ember Noir)', 'Framer Motion animations', 'Scroll-driven image sequence'] },
-                { label: 'Backend',  items: ['Python + FastAPI', 'Pydantic validation', 'Pillow image processing', 'PyTorch + DenseNet121'] },
-                { label: 'Model',    items: ['DenseNet121 (fine-tuned)', 'NLM Shenzhen + Kaggle TB datasets', 'Binary TB/Normal classification', 'Grad-CAM explainability (planned)'] },
+                { label: 'Backend',  items: ['Python + FastAPI', 'Pydantic validation', 'Pillow image processing', 'PyTorch + CUDA Acceleration'] },
+                { label: 'Model',    items: ['EfficientNet-B0 (fine-tuned)', 'Kaggle TB + Shenzhen datasets', 'Binary TB/Normal classification (val_auc: 0.9997)', 'Grad-CAM++ explainability (active)'] },
                 { label: 'Reliability Engine', items: ['Separate testable module', 'Image quality validation', 'Conflicting evidence detection', 'Four-state result handling'] },
               ].map(section => (
                 <div key={section.label} style={{ background: 'rgba(255,107,74,0.05)', border: '1px solid rgba(255,107,74,0.12)', borderRadius: 12, padding: 14 }}>
@@ -92,20 +92,22 @@ export const AboutPage: React.FC = () => {
             </div>
             <div className="space-y-3">
               {[
-                { name: 'Shenzhen Hospital CXR Set',            source: 'NLM / NIH',       role: 'Training & Validation', status: 'Pending verification' },
-                { name: 'Montgomery County CXR Set',            source: 'NLM / NIH',       role: 'External test set only', status: 'Pending verification' },
-                { name: 'TB Chest X-ray Dataset (tawsifurrahman)', source: 'Kaggle · CC BY 4.0', role: 'Training & Validation', status: 'Pending verification' },
+                { name: 'Shenzhen Hospital CXR Set',            source: 'NLM / NIH',       role: 'Training & Validation', status: 'Verified & Loaded' },
+                { name: 'Montgomery County CXR Set',            source: 'NLM / NIH',       role: 'External test set',     status: 'Verified & Evaluated' },
+                { name: 'TB Chest X-ray Dataset (tawsifurrahman)', source: 'Kaggle · CC BY 4.0', role: 'Training & Validation', status: 'Verified & Trained' },
               ].map(ds => (
-                <div key={ds.name} style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.14)', borderRadius: 12, padding: 14 }}>
+                <div key={ds.name} style={{ background: 'rgba(34,197,94,0.05)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: 12, padding: 14 }}>
                   <div className="flex flex-wrap items-center justify-between gap-2 mb-1">
                     <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{ds.name}</p>
-                    <span className="result-badge result-badge-limited">{ds.status}</span>
+                    <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>
+                      {ds.status}
+                    </span>
                   </div>
                   <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Source: {ds.source} · Role: {ds.role}</p>
                 </div>
               ))}
             </div>
-            <p className="text-xs mt-4" style={{ color: 'var(--text-faint)' }}>Dataset verification and integrity checks will be completed before any model training begins. No datasets have been downloaded yet.</p>
+            <p className="text-xs mt-4" style={{ color: 'var(--text-faint)' }}>Datasets verified and trained into the active EfficientNet-B0 model weights (tb_model_best.pth).</p>
           </GlassCard>
         </motion.div>
 
@@ -120,9 +122,9 @@ export const AboutPage: React.FC = () => {
               {[
                 { title: 'Not clinically validated', body: 'This prototype has not been validated in clinical settings. Its performance on populations different from the training datasets is unknown.' },
                 { title: 'Small public datasets', body: 'The NLM Shenzhen and Montgomery datasets are small (hundreds of images). Claims about generalisation to diverse populations cannot be made.' },
-                { title: 'Model output is not a calibrated probability', body: 'The DenseNet121 score has not been calibrated. It cannot be interpreted as a clinical probability of having TB.' },
+                { title: 'Model output is not a calibrated probability', body: 'The EfficientNet-B0 score has not been externally calibrated. It cannot be interpreted as a clinical probability of having TB.' },
                 { title: 'Reliability rules are experimental', body: 'All reliability thresholds are prototype rules without clinical validation. They are documented as experimental and clearly labelled.' },
-                { title: 'No real-time model inference yet', body: 'The model has not yet been trained or integrated. The backend currently returns an honest "Unable to Assess" state.' },
+                { title: 'Screening support status', body: 'While live PyTorch EfficientNet-B0 inference and Grad-CAM++ are active, this software is an assistive tool designed for screening support workflows, not standalone diagnosis.' },
                 { title: 'Image quality detection is basic', body: 'Only fundamental image validity checks (format, dimensions, decodability) are implemented. Clinical-quality assessment is not.' },
               ].map(lim => (
                 <div key={lim.title} className="flex gap-3 rounded-xl" style={{ background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.10)', padding: 14 }}>

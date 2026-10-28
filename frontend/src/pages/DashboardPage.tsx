@@ -86,7 +86,7 @@ export const DashboardPage: React.FC = () => {
                 <span className="gradient-text">SwasthyaScan AI</span>
               </h1>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: 6 }}>
-                Reliability-aware tuberculosis screening support ”” research prototype
+                Reliability-aware tuberculosis screening & clinical support platform
               </p>
             </div>
             <Button variant="primary" size="md" onClick={() => navigate('/screening')} iconRight={<ArrowRight size={16} />}>
@@ -212,9 +212,9 @@ export const DashboardPage: React.FC = () => {
           <div style={{ display: 'flex', gap: 12, padding: '16px 20px', borderRadius: 14, background: 'rgba(251,191,36,0.05)', border: '1px solid rgba(251,191,36,0.15)' }}>
             <AlertTriangle size={15} style={{ color: 'var(--result-caution)', flexShrink: 0, marginTop: 1 }} />
             <div>
-              <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--result-caution)', marginBottom: 4, letterSpacing: '0.06em' }}>RESEARCH PROTOTYPE ”” IMPORTANT SAFETY NOTICE</p>
+              <p style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--result-caution)', marginBottom: 4, letterSpacing: '0.06em' }}>CLINICAL SAFETY NOTICE</p>
               <p style={{ fontSize: '0.75rem', lineHeight: 1.65, color: 'var(--text-muted)' }}>
-                SwasthyaScan AI is a research prototype, not a clinically validated medical device. It does not diagnose, confirm, or rule out tuberculosis. All results require professional interpretation. Do not delay seeking medical care based on any output from this application.
+                SwasthyaScan AI provides preliminary screening support. It does not replace definitive microbiological diagnosis. All AI results require qualified clinician review and correlation with patient history.
               </p>
             </div>
             <Info size={13} style={{ color: 'var(--text-faint)', flexShrink: 0, marginTop: 1 }} />

@@ -149,7 +149,7 @@ function VerticalStepper({ current }: { current: number }) {
           fontFamily: 'var(--font-mono)', fontSize: '0.72rem',
           color: 'var(--text-muted)', lineHeight: 1.6,
         }}>
-          <><AlertTriangle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6, color: 'var(--result-caution)' }} />Research prototype only. No data is stored. Results require professional interpretation.</>
+          <><AlertTriangle size={12} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 6, color: 'var(--result-caution)' }} />AI-assisted screening support. No data is stored. Results require professional interpretation.</>
         </p>
       </div>
     </div>
@@ -716,12 +716,12 @@ function StepReview({ form, submitting, submitError, onBack, onSubmit, onConsent
           checked={form.consent}
           onChange={e => onConsent(e.target.checked)}
           style={{ accentColor: 'var(--ember)', width: 18, height: 18, flexShrink: 0, marginTop: 1 }}
-          aria-label="Acknowledge research prototype disclaimer"
+          aria-label="Acknowledge AI screening support disclaimer"
         />
         <div>
           <p style={{ fontFamily: 'var(--font-body)', fontWeight: 600,
             fontSize: '0.875rem', marginBottom: 4 }}>
-            I understand this is a research prototype{' '}
+            I understand this is an AI screening support tool{' '}
             <span style={{ color: 'var(--result-review)' }}>*</span>
           </p>
           <p style={{ fontFamily: 'var(--font-body)', fontSize: '0.8125rem',

@@ -404,7 +404,7 @@ export const ResultsPage: React.FC = () => {
             <AlertTriangle size={14} style={{ color: '#EF4444', flexShrink: 0, marginTop: 2 }} />
             <p className="text-xs leading-relaxed" style={{ color: 'var(--text-muted)' }}>
               <strong style={{ color: '#EF4444' }}>Medical Disclaimer: </strong>
-              PulmoSure is a research prototype. This report does not constitute a medical diagnosis.
+              SwasthyaScan AI provides screening support. This report does not constitute a medical diagnosis.
               AI screening cannot confirm or rule out tuberculosis.
               Always consult a qualified healthcare professional for diagnosis and treatment.
             </p>
