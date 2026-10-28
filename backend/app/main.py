@@ -29,7 +29,7 @@ from app.db.database import init_db
 from app.services import model_service
 from app.services.retention_service import cleanup_loop, run_cleanup
 from app.services.upload_service import init_uploads
-
+from app.services.model_download import ensure_weights
 # ── Logging ──────────────────────────────────────────────────────────────────
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper(), logging.INFO),
@@ -72,6 +72,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         logger.warning("Startup cleanup error (non-fatal): %s", exc)
 
     # ── Model loading ─────────────────────────────────────────────────────────
+    ensure_weights()
     if settings.model_configured:
         loaded = model_service.load_model(settings.model_weights_path)
         if loaded:
