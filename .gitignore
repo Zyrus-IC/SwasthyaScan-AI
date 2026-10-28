@@ -99,3 +99,4 @@ kaggle.json
 backend/data/swasthyascan.db
 backend/data/uploads/
 backend/data/*.db
+Dataset of Tuberculosis Chest X-rays Images/
